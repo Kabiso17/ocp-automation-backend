@@ -15,22 +15,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Clone Ansible playbooks（bake 進 image，使用者無需額外操作）
-#
-# CI/CD（GitHub Actions）：透過 BuildKit secret 傳入 PAT，token 不會進入 image history：
-#   docker buildx build --secret id=git_pat,env=GIT_CLONE_PAT .
-#
-# 本機手動 build：
-#   GIT_CLONE_PAT=<your-pat> docker buildx build --secret id=git_pat,env=GIT_CLONE_PAT .
-RUN --mount=type=secret,id=git_pat \
-    GIT_PAT=$(cat /run/secrets/git_pat 2>/dev/null || echo "") && \
-    if [ -n "$GIT_PAT" ]; then \
-        git clone https://${GIT_PAT}@github.com/Kabiso17/ocp-automation.git /app/automation && \
-        git clone https://${GIT_PAT}@github.com/CCChou/OpenShift-Automation.git /root/OpenShift-Automation; \
-    else \
-        git clone https://github.com/Kabiso17/ocp-automation.git /app/automation && \
-        git clone https://github.com/CCChou/OpenShift-Automation.git /root/OpenShift-Automation; \
-    fi
+# Clone Ansible repos（兩者皆為 public repo，不需要任何 token）
+# CCChou/OpenShift-Automation：
+#   - /app/automation       → Ansible playbook 執行入口（AUTOMATION_DIR）
+#   - /root/OpenShift-Automation → Ansible roles 查找路徑（ansible.cfg roles_path）
+RUN git clone https://github.com/CCChou/OpenShift-Automation.git /app/automation && \
+    git clone https://github.com/CCChou/OpenShift-Automation.git /root/OpenShift-Automation
 
 # 複製 backend 程式碼
 # frontend/dist 不在此 image 內，main.py 的靜態 serve 會自動跳過

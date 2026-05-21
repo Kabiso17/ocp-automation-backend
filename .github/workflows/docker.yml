@@ -51,10 +51,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # BuildKit secret：GIT_CLONE_PAT 從 GitHub Secrets 讀取
-          # token 只存在於 build 的 tmpfs，不會進入任何 image layer
-          secrets: |
-            git_pat=${{ secrets.GIT_CLONE_PAT }}
+          # 兩個 Ansible repo 皆為 public，不需要傳入任何 token
           # Registry cache：加速重複 build（PR 時只讀 cache，不寫）
           cache-from: type=registry,ref=${{ secrets.REGISTRY_HOST }}/ocp-automation/ocp-automation-backend:buildcache
           cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}/ocp-automation/ocp-automation-backend:buildcache,mode=max', secrets.REGISTRY_HOST) || '' }}
